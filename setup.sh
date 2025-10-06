@@ -14,6 +14,8 @@ rm -rf "$BASE"/* && \
 setup "Cleared all files in $BASE/"
 
 # --- Create users and groups ---
+userdel -r tim &>/dev/null && \
+setup "Deleting user 'tim'"
 userdel -r john &>/dev/null && \
 setup "Deleting user 'john'"
 userdel -r martin &>/dev/null && \
@@ -26,6 +28,8 @@ groupdel -f deployment &>/dev/null && \
 setup "Deleting group 'deployment'"
 groupdel -f legal &>/dev/null && \
 setup "Deleting group 'legal'"
+groupdel -f qa &>/dev/null && \
+setup "Deleting group 'qa'"
 
 useradd john && \
 setup "Creating user 'john'"

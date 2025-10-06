@@ -48,7 +48,7 @@ else
    fail "User tim needs to be created"
 fi
 
-if $(id -Gn tim | grep -q "deployment"); then
+if $(id -Gn tim 2>/dev/null | grep -q "deployment"); then
    pass "User tim is in group 'deployment'"
 else
    fail "User tim should be in group 'deployment'"
@@ -68,4 +68,14 @@ else
 fi
 
 # 5. Change ownership and permissions for /opt/files/montgomery
-if [ "$(stat -c %G $BASE/montgomery)" = "tim" ]
+if [ "$(stat -c %G $BASE/montgomery)" = "legal" ]; then
+   pass "$BASE/montgomery/ and all its files are now owned by the 'legal' group"
+else
+   fail "$BASE/montgomery/ and all its files should be owned by the 'legal' group"
+fi
+
+if [ "$(stat -c %A $BASE/montgomery | cut -c 2-10)" = "r--r-----" ]; then
+   pass "$BASE/montgomery/ is ONLY be readable by the user and group that owns it"
+else
+   fail "$BASE/montgomery/ should ONLY be readable by the user and group that owns it"
+fi
