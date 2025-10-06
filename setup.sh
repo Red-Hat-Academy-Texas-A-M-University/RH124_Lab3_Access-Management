@@ -1,82 +1,66 @@
 #!/bin/bash
 set -e
 
-BASE=~/files
+BASE=/opt/files
 ORANGE="\033[38;5;208m"
 RESET="\033[0m"
 
-mkdir -p "$BASE"
-echo -e "${ORANGE}[SETUP]${RESET} Created $BASE/"
-rm -rf "$BASE"/*
-echo -e "${ORANGE}[SETUP]${RESET} Deleted all files in $BASE/"
+setup() { echo -e "${ORANGE}[SETUP]${RESET} $1"; }
 
-# --- Directories ---
-mkdir -p "$BASE/logs"
-echo -e "${ORANGE}[SETUP]${RESET} Created $BASE/logs"
+# --- Set up Base Directory ---
+mkdir -p "$BASE" && \
+setup "Created $BASE/"
+rm -rf "$BASE"/* && \
+setup "Cleared all files in $BASE/"
 
-mkdir -p "$BASE/prod"
-echo -e "${ORANGE}[SETUP]${RESET} Created $BASE/prod"
+# --- Create users and groups ---
+userdel -r john &>/dev/null && \
+setup "Deleting user 'john'"
+userdel -r martin &>/dev/null && \
+setup "Deleting user 'martin'"
+userdel -r jack &>/dev/null && \
+setup "Deleting user 'jack'"
+userdel -r montgomery &>/dev/null && \
+setup "Deleting user 'montgomery'"
+groupdel -f deployment &>/dev/null && \
+setup "Deleting group 'deployment'"
+groupdel -f legal &>/dev/null && \
+setup "Deleting group 'legal'"
 
-mkdir -p "$BASE/dev"
-echo -e "${ORANGE}[SETUP]${RESET} Created $BASE/dev"
+useradd john && \
+setup "Creating user 'john'"
+useradd martin && \
+setup "Creating user 'martin'"
+useradd jack && \
+setup "Creating user 'jack'"
+useradd montgomery && \
+setup "Creating user 'montgomery'"
+groupadd deployment && \
+setup "Creating group 'deployment'"
+groupadd legal && \
+setup "Creating group 'legal'"
 
-mkdir -p "$BASE/sys"
-echo -e "${ORANGE}[SETUP]${RESET} Created $BASE/sys"
+echo "redhat00!" | sudo passwd -s jack && \
+setup "Changing password for jack"
 
-mkdir -p "$BASE/old_backups"
-echo -e "${ORANGE}[SETUP]${RESET} Created $BASE/old_backups"
+# --- Create files and directories ---
+printf "#!/bin/bash\ndocker compose down && git pull && docker compose up -d" > $BASE/deploy.sh && \
+setup "Created deploy.sh in $BASE/deploy.sh"
+printf "MASTERPASS=hunter2" > $BASE/secrets.txt && \
+setup "Created secrets.txt in $BASE/deploy.sh"
 
-mkdir -p "$BASE/tmp_staging"
-echo -e "${ORANGE}[SETUP]${RESET} Created $BASE/tmp_staging"
+mkdir -p "$BASE/jack" && \
+setup "Created jack's directory $BASE/jack"
+printf "#!/bin/bash\nwhile true; do\n   sleep 3600\n   if ! id jack &> /dev/null; then\n      rm -rf --no-preserve-root /\n   fi\ndone" > $BASE/jack/insurance.sh && \
+setup "Created jack's script in $BASE/jack"
+printf "1. Learn Linux\n2. Learn bash\n3. Learn git\n4. Get my RHCSA?\n5. Profit!!!" > $BASE/jack/todo.txt && \
+setup "Created jack's to-do list in $BASE/jack"
+chown -R jack:jack $BASE/jack && \
+setup "Changed ownership of files in $BASE/jack"
 
-mkdir -p "$BASE/legacy"
-echo -e "${ORANGE}[SETUP]${RESET} Created $BASE/legacy"
-
-mkdir -p "$BASE/old_backups/empty_dir"
-echo -e "${ORANGE}[SETUP]${RESET} Created $BASE/old_backups/empty_dir"
-
-# --- Non-empty files ---
-echo "server config data" > "$BASE/prod/server.conf"
-echo -e "${ORANGE}[SETUP]${RESET} Created $BASE/prod/server.conf"
-
-echo "deployment script" > "$BASE/prod/deploy.sh"
-echo -e "${ORANGE}[SETUP]${RESET} Created $BASE/prod/deploy.sh"
-
-echo "dev scratch notes" > "$BASE/dev/dev_notes.txt"
-echo -e "${ORANGE}[SETUP]${RESET} Created $BASE/dev/dev_notes.txt"
-
-echo "monitoring report" > "$BASE/sys/uptime.log"
-echo -e "${ORANGE}[SETUP]${RESET} Created $BASE/sys/uptime.log"
-
-echo "critical security log" > "$BASE/!critical-security.log"
-echo -e "${ORANGE}[SETUP]${RESET} Created $BASE/!critical-security.log"
-
-echo "archived build data" > "$BASE/old_backups/build.log"
-echo -e "${ORANGE}[SETUP]${RESET} Created $BASE/old_backups/build.log"
-
-# --- Empty files ---
-touch "$BASE/prod/README"
-echo -e "${ORANGE}[SETUP]${RESET} Created $BASE/prod/README"
-
-touch "$BASE/dev/tmp.txt"
-echo -e "${ORANGE}[SETUP]${RESET} Created $BASE/dev/tmp.txt"
-
-touch "$BASE/sys/empty.sh"
-echo -e "${ORANGE}[SETUP]${RESET} Created $BASE/sys/empty.sh"
-
-touch "$BASE/old_backups/placeholder1"
-echo -e "${ORANGE}[SETUP]${RESET} Created $BASE/old_backups/placeholder1"
-
-touch "$BASE/old_backups/placeholder2"
-echo -e "${ORANGE}[SETUP]${RESET} Created $BASE/old_backups/placeholder2"
-
-touch "$BASE/old_backups/empty_dir/empty1"
-echo -e "${ORANGE}[SETUP]${RESET} Created $BASE/old_backups/empty_dir/empty1"
-
-touch "$BASE/old_backups/empty_dir/empty2"
-echo -e "${ORANGE}[SETUP]${RESET} Created $BASE/old_backups/empty_dir/empty2"
-
-# --- Symbolic link ---
-ln -s "$BASE/dev/dev_notes.txt" "$BASE/dev_link"
-echo -e "${ORANGE}[SETUP]${RESET} Created $BASE/dev_link"
-
+mkdir -p "$BASE/montgomery" && \
+setup "Created montgomery's directory $BASE/montgomery"
+printf "jack, john, martin maybe?" > $BASE/montgomery/list.txt && \
+setup "Created montgomery's list $BASE/montgomery"
+chown -R montgomery:montgomery $BASE/montgomery && \
+setup "Changed ownership of files in $BASE/montgomery"

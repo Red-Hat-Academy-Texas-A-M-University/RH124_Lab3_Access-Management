@@ -1,8 +1,7 @@
 #!/bin/bash
 set -e
 
-BASE=~/files
-LOGS="$BASE/logs"
+BASE=/opt/files
 GREEN="\033[0;32m"
 RED="\033[0;31m"
 RESET="\033[0m"
@@ -10,58 +9,63 @@ RESET="\033[0m"
 pass() { echo -e "${GREEN}[PASSED]${RESET} $1"; }
 fail() { echo -e "${RED}[FAILED]${RESET} $1"; }
 
-# --- 1. All non-critical files should be in logs ---
-EXPECTED_FILES=("server.conf" "deploy.sh" "dev_notes.txt" "uptime.log" "build.log" \
-                "README" "tmp.txt" "empty.sh" "placeholder1" "placeholder2" "empty1" "empty2")
-
-all_in_logs=true
-for f in "${EXPECTED_FILES[@]}"; do
-  if [[ -f "$LOGS/$f" ]]; then
-    pass "$f found in logs"
-  else
-    fail "$f not found in logs"
-    all_in_logs=false
-  fi
-done
-
-# --- 2. Critical file should remain outside logs ---
-if [[ -f "$BASE/!critical-security.log" ]]; then
-  pass "!critical-security.log is still in place"
+# 1. Check deployment group ownership and permissions of deploy.sh
+if [ "$(stat -c %G $BASE/deploy.sh)" = "deployment" ]; then
+   pass "$BASE/deploy.sh is owned by the deployment group"
 else
-  fail "!critical-security.log is missing or moved"
+   fail "$BASE/deploy.sh is not owned by the deployment group"
 fi
 
-# --- 3. Symlink exists and points to a file inside logs ---
-if [[ -L "$BASE/dev_link" ]]; then
-  target="$(readlink -f "$BASE/dev_link")"
-  if [[ "$target" == "$LOGS/"* && -f "$target" ]]; then
-    pass "dev_link points to a valid file in logs"
-  else
-    fail "dev_link does not point into logs"
-  fi
+if [ "$(stat -c %A $BASE/deploy.sh | cut -c 7)" = "x" ]; then
+   pass "$BASE/deploy.sh is executable by the deployment group"
 else
-  fail "dev_link is missing or not a symlink"
+   fail "$BASE/deploy.sh should be executable by the deployment group"
 fi
 
-# --- 4. No leftover empty directories ---
-leftover_dirs=$(find "$BASE" -mindepth 1 -type d -empty)
-if [[ -z "$leftover_dirs" ]]; then
-  pass "No empty directories remain"
+# 2. Create the qa group with the appropriate users
+if $(grep -q "^qa:" /etc/group); then
+   pass "Group 'qa' exists"
 else
-  fail "Empty directories still exist:"
-  echo "$leftover_dirs"
+   fail "Group 'qa' should be created"
 fi
 
-# --- 5. size.txt exists and has correct total ---
-if [[ -f "$BASE/size.txt" ]]; then
-  actual_size=$(du -cb "$LOGS"/* | tail -n1 | awk '{print $1}')
-  recorded_size=$(cat "$BASE/size.txt" | tr -d '[:space:]')
-  if [[ "$actual_size" == "$recorded_size" ]]; then
-    pass "size.txt contains correct cumulative size ($actual_size bytes)"
-  else
-    fail "size.txt size is incorrect (expected $actual_size, found $recorded_size)"
-  fi
+if $(id -Gn john | grep -q "qa"); then
+   pass "User john is in group 'qa'"
 else
-  fail "size.txt is missing"
+   fail "Users 'john' should be a part of group 'qa'"
 fi
 
+if $(id -Gn martin | grep -q "qa"); then
+   pass "User martin is in group 'qa'"
+else
+   fail "Users 'martin' should be a part of group 'qa'"
+fi
+
+# 3. Check for the user tim 
+if $(id tim &> /dev/null); then
+   pass "User tim exists"
+else
+   fail "User tim needs to be created"
+fi
+
+if $(id -Gn tim | grep -q "deployment"); then
+   pass "User tim is in group 'deployment'"
+else
+   fail "User tim should be in group 'deployment'"
+fi
+
+# 4. Revoke access to user jack and transfer ownership of files
+if $(sudo grep -q '^jack:!' /etc/shadow); then
+   pass "User jack is locked out"
+else
+   fail "User jack should have his password locked"
+fi
+
+if [ "$(stat -c %U $BASE/jack)" = "tim" ]; then
+   pass "$BASE/jack and all its files are now owned by tim"
+else
+   fail "$BASE/jack and all its files should be owned by tim"
+fi
+
+# 5. Change ownership and permissions for /opt/files/montgomery
+if [ "$(stat -c %G $BASE/montgomery)" = "tim" ]
