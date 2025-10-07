@@ -44,7 +44,7 @@ setup "Creating group 'deployment'"
 groupadd legal && \
 setup "Creating group 'legal'"
 
-echo "321!@/ddfw00!" | sudo passwd --stdin jack && \
+echo "321!@/ddfw00!" | sudo passwd --stdin jack &>/dev/null && \
 setup "Changing password for jack"
 
 # --- Create files and directories ---
