@@ -32,13 +32,13 @@ fi
 if $(id -Gn john | grep -q "qa"); then
    pass "User john is in group 'qa'"
 else
-   fail "Users 'john' should be a part of group 'qa'"
+   fail "User 'john' should be a part of group 'qa'"
 fi
 
 if $(id -Gn martin | grep -q "qa"); then
    pass "User martin is in group 'qa'"
 else
-   fail "Users 'martin' should be a part of group 'qa'"
+   fail "User 'martin' should be a part of group 'qa'"
 fi
 
 # 3. Check for the user tim 
